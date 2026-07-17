@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LifeSync">
+    <title>LifeSync Web3 - Royal Capital Hub (V3 Elite)</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.error);</script>
+
+    <style>
+        /* CSS VARIABLES & RESET */
+        :root { 
+            --primary: #d4af37; --primary-glow: rgba(212, 175, 55, 0.3); --secondary: #aa7c11; 
+            --bg: #050811; --card: #0b132b; --text: #f4f6fa; --text-muted: #94a3b8; 
+            --border-neon: rgba(212, 175, 55, 0.2); --gold-light: #f3e5ab; --danger: #ef4444; --success: #4ade80; --info: #38bdf8;
+        }
+        * { box-sizing: border-box; }
+        body { 
+            background: radial-gradient(circle at 50% 0%, #111c30 0%, var(--bg) 100%); 
+            color: var(--text); font-family: 'Space Grotesk', system-ui, sans-serif; 
+            display: flex; justify-content: center; padding: 15px; margin: 0; min-height: 100vh;
+        }
+        
+        /* UTILITY CLASSES (CÔNG NGHIỆP HÓA CSS) */
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .flex-center { display: flex; justify-content: center; align-items: center; }
+        .text-bold { font-weight: 700; }
+        .text-uppercase { text-transform: uppercase; }
+        .btn-base { font-family: inherit; border-radius: 6px; cursor: pointer; transition: all 0.2s; border: none; }
+        .glass-panel { background: rgba(5,10,20,0.6); border: 1px solid rgba(212,175,55,0.08); border-radius: 10px; padding: 8px; margin-bottom: 12px; }
+        .gradient-text { background: linear-gradient(90deg, var(--primary), var(--gold-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .title-xs { font-size: 0.72rem; font-weight: 800; color: var(--primary); text-transform: uppercase; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;}
+
+        /* LAYOUT & CARDS */
+        .card { background: var(--card); border: 1px solid var(--border-neon); border-top: 4px solid var(--primary); padding: 18px; border-radius: 16px; width: 100%; max-width: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+        .web3-header { padding-bottom: 8px; border-bottom: 1px solid rgba(212,175,55,0.12); margin-bottom: 12px; }
+        .web3-logo { font-family: 'Rajdhani', sans-serif; font-size: 1.25rem; gap: 6px; }
+        
+        /* BUTTONS & CONTROLS */
+        .sound-toggle { background: transparent; color: var(--text-muted); font-size: 0.9rem; }
+        .sound-toggle.muted { color: var(--danger); }
+        .connect-btn, .action-btn { background: linear-gradient(135deg, var(--secondary), var(--primary)); color: #090e1a; border: 1px solid rgba(212,175,55,0.4); font-weight: 800; }
+        .connect-btn { padding: 5px 10px; font-size: 0.72rem; }
+        .connect-btn.connected { background: rgba(212,175,55,0.08); color: var(--primary); border-color: var(--primary); }
+        .action-btn { padding: 8px; border-radius: 8px; font-size: 0.8rem; width: 100%; }
+        
+        /* THEME SELECTOR */
+        .theme-selector { background: rgba(5,10,20,0.4); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(212,175,55,0.06); margin-bottom: 12px; }
+        .theme-title { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); }
+        .theme-dropdown { position: relative; }
+        .theme-dropbtn { background: #050a14; color: var(--primary); border: 1px solid var(--primary); padding: 4px 8px; font-size: 0.7rem; font-weight: 800; gap: 5px; width: 125px; height: 28px; }
+        .theme-dropdown-content { display: none; position: absolute; right: 0; top: 110%; background: #050a14; width: 125px; border: 1px solid var(--primary); border-radius: 6px; z-index: 100; overflow: hidden; }
+        .theme-dropdown-content.show { display: block; }
+        .theme-option { color: var(--text); padding: 6px 8px; font-size: 0.68rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .theme-option:hover { background: rgba(255,255,255,0.05); }
+        .theme-indicator { width: 6px; height: 6px; border-radius: 50%; }
+
+        /* BOSS & PROGRESS BARS */
+        .boss-section { background: linear-gradient(180deg, rgba(56, 189, 248, 0.05) 0%, rgba(5,10,20,0.6) 100%); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 10px; margin-bottom: 12px; }
+        .boss-header { font-size: 0.75rem; font-weight: 800; color: var(--info); margin-bottom: 6px; }
+        .progress-container { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); height: 14px; border-radius: 4px; overflow: hidden; position: relative; margin-bottom: 6px; }
+        .progress-fill { height: 100%; transition: width 0.4s ease-out; }
+        .boss-hp-fill { background: linear-gradient(90deg, #0284c7, var(--info)); }
+        .progress-text { position: absolute; inset: 0; text-align: center; font-size: 0.6rem; font-weight: 800; line-height: 14px; text-shadow: 0 1px 2px #000; color: #fff; }
+        .boss-footer { font-size: 0.65rem; color: var(--text-muted); }
+        
+        /* STATUS EFFECTS */
+        .status-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; margin-bottom: 10px; }
+        .status-effects { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; min-height: 20px; }
+        .effect-badge { font-size: 0.58rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; gap: 3px; animation: pulse 2s infinite; }
+        .effect-badge.buff { background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); color: var(--success); }
+        .effect-badge.debuff { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; }
+        @keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
+
+        /* XP ALLOCATOR */
+        .stats-grid-alloc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .stat-alloc-box { background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); padding: 5px; border-radius: 6px; flex-direction: column; }
+        .stat-name { font-size: 0.58rem; color: var(--text-muted); }
+        .stat-val { font-family: 'Rajdhani', sans-serif; font-size: 0.9rem; color: #fff; margin: 2px 0; font-weight: 700;}
+        .stat-plus-btn { background: var(--primary); color: #090e1a; width: 100%; font-size: 0.6rem; padding: 2px 0; font-weight: 800; }
+        .stat-plus-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* TABS & STATS */
+        .tabs { display: flex; gap: 4px; background: rgba(5,10,20,0.6); padding: 3px; border-radius: 8px; margin-bottom: 12px; }
+        .tab-btn { flex: 1; padding: 8px; border-radius: 6px; color: var(--text-muted); background: transparent; font-size: 0.75rem; font-weight: 700; }
+        .tab-btn.active { background: linear-gradient(135deg, rgba(170,124,17,0.15), rgba(212,175,55,0.06)); color: var(--primary); border: 1px solid rgba(212,175,55,0.2); }
+        .stats { font-family: 'Rajdhani', sans-serif; font-size: 1.15rem; color: #fff; font-weight: 700; }
+        .imperial-rank { background: rgba(212, 175, 55, 0.08); border: 1px solid var(--border-neon); border-radius: 12px; width: 130px; height: 24px; }
+        .imperial-rank text { font-size: 11px; fill: var(--gold-light); font-weight: 800; text-anchor: middle; dominant-baseline: middle; font-family: 'Space Grotesk', sans-serif; }
+        
+        /* STATUS PILLS */
+        .status-container { display: flex; gap: 10px; margin-bottom: 8px; font-size: 0.72rem; }
+        .status-pill { background: rgba(5,10,20,0.5); padding: 3px 8px; border-radius: 20px; border: 1px solid rgba(212, 175, 55, 0.1); gap: 4px; display: inline-flex; align-items: center; }
+        .hp-bar-inline { width: 45px; height: 6px; background: #2d1217; border-radius: 3px; overflow: hidden; display: inline-block; margin-left: 2px; }
+        .hp-bar-fill { background: var(--info); height: 100%; transition: width 0.3s; }
+        .shield-active { color: var(--info); text-shadow: 0 0 4px rgba(56,189,248,0.5); }
+        .streak { color: var(--primary); font-size: 0.75rem; gap: 4px; }
+        .tax-countdown span { color: #f43f5e; font-weight: 700; }
+
+        /* INPUTS & CHARTS */
+        input, .bulk-section textarea { width: 100%; font-family: inherit; border: 1px solid rgba(212,175,55,0.12); background: rgba(5,10,20,0.4); color: #fff; padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; font-size: 0.8rem; }
+        .chart-container { height: 130px; }
+        
+        /* HEATMAP */
+        .heatmap-grid { display: flex; gap: 3px; background: rgba(0,0,0,0.2); padding: 6px; border-radius: 6px; }
+        .heatmap-day { flex: 1; aspect-ratio: 1; border-radius: 2px; background: rgba(255,255,255,0.05); position: relative; }
+        .heatmap-day[data-level="1"] { background: rgba(212,175,55,0.25); } .heatmap-day[data-level="2"] { background: rgba(212,175,55,0.5); }
+        .heatmap-day[data-level="3"] { background: rgba(212,175,55,0.8); } .heatmap-day[data-level="4"] { background: #fff; }
+        .heatmap-day::after { content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: #050a14; font-size: 0.55rem; padding: 3px 6px; border-radius: 3px; opacity: 0; pointer-events: none; transition: 0.2s; border: 1px solid var(--primary); z-index: 10; white-space: nowrap; }
+        .heatmap-day:hover::after { opacity: 1; }
+
+        /* FILTER & TASK LIST */
+        .filter-container { display: none; gap: 6px; margin-bottom: 10px; }
+        .filter-chip { flex: 1; background: rgba(5,10,20,0.4); border: 1px solid rgba(212,175,55,0.12); color: var(--text-muted); padding: 6px; font-size: 0.72rem; }
+        .filter-chip.active { background: linear-gradient(135deg, rgba(170,124,17,0.12), rgba(212,175,55,0.05)); color: var(--primary); border-color: var(--primary); }
+        .btn-list { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
+        
+        /* TASK ITEM */
+        .act-item { background: rgba(212,175,55,0.01); padding: 5px 8px; border-radius: 8px; border: 1px solid rgba(212,175,55,0.04); height: 34px; position: relative; gap: 6px; }
+        .act-item.completed { opacity: 0.6; background: rgba(0, 0, 0, 0.2); }
+        .act-item.completed .act-name { text-decoration: line-through; color: var(--text-muted); }
+        .act-item.is-upcoming { background: rgba(212, 175, 55, 0.06); border-color: var(--primary); animation: pulseUpcoming 2.5s infinite ease-in-out; }
+        .act-item.is-upcoming::after { content: "⚔️ Trận chiến"; position: absolute; top: -6px; left: 30px; background: var(--primary); color: #050811; font-size: 0.52rem; font-weight: 900; padding: 1px 6px; border-radius: 3px; z-index: 5; }
+        @keyframes pulseUpcoming { 0%, 100% { box-shadow: 0 0 5px rgba(212, 175, 55, 0.1); } 50% { box-shadow: 0 0 15px var(--primary-glow); } }
+        
+        .drag-handle { cursor: grab; color: rgba(212,175,55,0.15); } .drag-handle:hover { color: var(--primary); }
+        .act-content { flex: 1; min-width: 0; }
+        .act-name { font-size: 0.78rem; color: var(--gold-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; display: block; }
+        .act-actions { gap: 4px; display: flex; }
+        .act-btn { background: linear-gradient(135deg, var(--secondary), var(--primary)); color: #090e1a; height: 22px; padding: 0 6px; font-size: 0.7rem; font-weight: 800; border: 1px solid rgba(212,175,55,0.2); }
+        .act-btn:disabled { background: rgba(255,255,255,0.05); color: var(--text-muted); border-color: transparent; cursor: not-allowed; }
+        .del-btn { width: 22px; height: 22px; background: transparent; color: rgba(212,175,55,0.2); }
+        .del-btn:hover { color: var(--primary); }
+
+        /* MARKET, BULK, TREASURY, WHEEL */
+        .bulk-section { display: none; margin-top: 10px; } .bulk-section textarea { height: 70px; }
+        .market-items { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .market-item { background: rgba(5,10,20,0.6); border: 1px solid rgba(212,175,55,0.08); padding: 6px; border-radius: 6px; flex-direction: column; justify-content: space-between; display: flex; }
+        .m-item-header { font-size: 0.65rem; color: var(--gold-light); }
+        .m-item-desc { font-size: 0.58rem; color: var(--text-muted); margin: 3px 0 6px 0; min-height: 24px; }
+        .buy-btn, .mint-badge-btn { background: transparent; border: 1px solid var(--primary); color: var(--primary); font-size: 0.62rem; padding: 3px; font-weight: 800; }
+        .buy-btn:hover:not(:disabled), .mint-badge-btn:hover:not(:disabled) { background: var(--primary); color: #090e1a; }
+        .buy-btn:disabled, .mint-badge-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .badge-container { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+        .badge-item { font-size: 0.6rem; background: rgba(5,10,20,0.6); border: 1px solid rgba(212,175,55,0.1); padding: 3px 6px; border-radius: 5px; gap: 3px; }
+        .wheel-display { font-family: 'Rajdhani', sans-serif; font-size: 0.95rem; color: #fff; border: 1px dashed var(--primary); padding: 6px 12px; border-radius: 6px; width: 100%; background: rgba(0,0,0,0.2); text-align: center; font-weight: 700; }
+        .wheel-display.spinning { animation: spinColor 0.2s infinite; }
+        @keyframes spinColor { 0%, 100% { color: var(--primary); } 50% { color: #fff; } }
+    </style>
+</head>
+<body>
+<div class="card animate__animated animate__fadeIn">
+    <div class="web3-header flex-between">
+        <div class="web3-logo flex-center gradient-text"><i class="fa-solid fa-crown"></i> Royal Capital Hub</div>
+        <div class="flex-center" style="gap: 10px;">
+            <button id="sound-toggle" class="btn-base sound-toggle"><i class="fa-solid fa-volume-high"></i></button>
+            <button id="connect-wallet" class="btn-base connect-btn"><i class="fa-solid fa-wallet"></i> Connect Wallet</button>
+        </div>
+    </div>
+    
+    <div class="theme-selector flex-between">
+        <span class="theme-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Imperial Theme</span>
+        <div class="theme-dropdown">
+            <button id="theme-dropdown-btn" class="btn-base theme-dropbtn flex-center">
+                <span class="theme-indicator" id="current-theme-indicator" style="background: #d4af37;"></span>
+                <span id="current-theme-name">Hoàng Kim</span>
+            </button>
+            <div id="theme-dropdown-menu" class="theme-dropdown-content">
+                <div class="theme-option" data-theme="gold"><span class="theme-indicator" style="background: #d4af37;"></span> Hoàng Kim</div>
+                <div class="theme-option" data-theme="bloodmoon"><span class="theme-indicator" style="background: #ff3333;"></span> Blood Moon</div>
+                <div class="theme-option" data-theme="ruby"><span class="theme-indicator" style="background: #e0115f;"></span> Hồng Ngọc</div>
+                <div class="theme-option" data-theme="sapphire"><span class="theme-indicator" style="background: #0f52ba;"></span> Lam Ngọc</div>
+                <div class="theme-option" data-theme="emerald"><span class="theme-indicator" style="background: #50c878;"></span> Phỉ Thúy</div>
+                <div class="theme-option" data-theme="amethyst"><span class="theme-indicator" style="background: #9966cc;"></span> Thạch Anh</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="boss-section animate__animated animate__pulse">
+        <div class="boss-header flex-between">
+            <span><i class="fa-solid fa-chart-line-down"></i> Rủi ro Hệ Thống</span>
+            <span id="boss-level">LV.1</span>
+        </div>
+        <div class="progress-container">
+            <div id="boss-hp-bar" class="progress-fill boss-hp-fill" style="width: 100%;"></div>
+            <span id="boss-hp-text" class="progress-text">500 / 500 Risk HP</span>
+        </div>
+        <div class="boss-footer flex-between">
+            <span>Hóa giải bằng: Tư Duy (INT) & Đòn Bẩy</span>
+            <span id="boss-status">STATUS: Đang phòng thủ</span>
+        </div>
+    </div>
+
+    <div class="status-grid">
+        <div class="status-container" style="margin: 0;">
+            <div class="status-pill" style="width: 100%;">
+                Thanh Khoản: <span id="hp-text" style="color: var(--info); font-weight:700;">100/100</span>
+                <div class="hp-bar-inline"><div id="hp-bar" class="hp-bar-fill"></div></div>
+            </div>
+        </div>
+        <div id="status-effects" class="status-effects"></div>
+    </div>
+    <div class="status-container flex-between">
+        <div class="status-pill"><i class="fa-solid fa-shield-halved"></i> <span id="text-shield-status">Không Phòng Vệ</span></div>
+        <div class="status-pill"><i class="fa-brands fa-ethereum" style="color: #627eea;"></i> <span id="crown-token-balance" class="text-bold" style="color: var(--primary);">0 $CROWN</span></div>
+    </div>
+
+    <div class="glass-panel">
+        <div class="title-xs"><span><i class="fa-solid fa-arrows-to-dot"></i> Thiết Kế Đòn Bẩy</span><span>Thặng dư: <span id="unused-xp" style="color:var(--primary);">0</span></span></div>
+        <div class="stats-grid-alloc">
+            <div class="stat-alloc-box flex-center"><span class="stat-name"><i class="fa-solid fa-crown"></i> INFL</span><span id="stat-str" class="stat-val">0</span><button class="btn-base stat-plus-btn" data-stat="str">+ Nâng</button></div>
+            <div class="stat-alloc-box flex-center"><span class="stat-name"><i class="fa-solid fa-brain"></i> INT</span><span id="stat-int" class="stat-val">0</span><button class="btn-base stat-plus-btn" data-stat="int">+ Nâng</button></div>
+            <div class="stat-alloc-box flex-center"><span class="stat-name"><i class="fa-solid fa-droplet"></i> LIQD</span><span id="stat-vit" class="stat-val">0</span><button class="btn-base stat-plus-btn" data-stat="vit">+ Nâng</button></div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button id="tab-finance" class="btn-base tab-btn active"><i class="fa-solid fa-gem"></i> Quyết Sách Vĩ Mô</button>
+        <button id="tab-health" class="btn-base tab-btn"><i class="fa-solid fa-heart-pulse"></i> Vận Hành Lối Sống</button>
+    </div>
+    
+    <div class="flex-between" style="margin-bottom: 4px;">
+        <div class="stats">EMPIRE LAYER <span id="stats" style="color: var(--primary);">0</span></div>
+        <div class="imperial-rank flex-center"><svg viewBox="0 0 150 20"><text x="75" y="10.5" id="rank-text">TẬP SỰ</text></svg></div>
+    </div>
+    
+    <div class="flex-between" style="margin-bottom: 8px;">
+        <div id="streak" class="text-bold streak flex-center"><i class="fa-solid fa-fire"></i> STREAK: 0 DAYS</div>
+        <div class="tax-countdown" style="font-size: 0.68rem; color: var(--text-muted);">Lệ Phí: <span id="tax-timer">--:--:--</span></div>
+    </div>
+    
+    <div class="progress-container" style="height: 18px; margin-bottom: 12px;">
+        <div id="fill-total" class="progress-fill" style="background: linear-gradient(90deg, var(--secondary), var(--primary)); width: 0%;"></div>
+        <div id="pct-total" class="progress-text">0%</div>
+    </div>
+    
+    <div class="glass-panel chart-container"><canvas id="trendChart"></canvas></div>
+
+    <div class="glass-panel">
+        <div class="title-xs" style="color:var(--text-muted);"><span>Sự Kiện Quyết Sách (7 ngày)</span><span id="heatmap-total">0 lần</span></div>
+        <div id="heatmap-grid" class="heatmap-grid"></div>
+    </div>
+    
+    <div>
+        <input type="text" id="name" placeholder="Mục tiêu Quyết Sách / Chỉ dụ...">
+        <input type="number" id="val" placeholder="Tầm ảnh hưởng (Tài Sản XP)...">
+        <button id="btn-issue" class="btn-base action-btn"><i class="fa-solid fa-scroll"></i> Phát Hành Quyết Sách</button>
+    </div>
+    <button id="btn-toggle-bulk" class="btn-base" style="width:100%; background:transparent; border:1px solid rgba(212,175,55,0.1); color:var(--text-muted); margin-top:8px; padding:5px; font-size:0.7rem;">Phát hành Hàng loạt</button>
+    
+    <div id="bulk-section" class="glass-panel bulk-section">
+        <textarea id="bulk-input" placeholder="Tên quyết sách | Điểm số"></textarea>
+        <div style="display:flex; gap:4px;">
+            <button id="btn-import-append" class="btn-base action-btn" style="background:rgba(255,255,255,0.03); color:#fff;"><i class="fa-solid fa-plus"></i> Thêm</button>
+            <button id="btn-import-overwrite" class="btn-base action-btn" style="background:var(--secondary);">Ghi đè</button>
+        </div>
+    </div>
+
+    <div class="glass-panel" style="margin-top: 12px; background: rgba(212,175,55,0.02);">
+        <div class="title-xs"><span><i class="fa-solid fa-shop"></i> Sàn Đòn Bẩy</span><span>Quỹ: <span id="market-gold">0 XP</span></span></div>
+        <div class="market-items">
+            <div class="market-item">
+                <div class="m-item-header flex-between"><span class="text-bold">Hợp Đồng Đòn Bẩy</span><span>50 XP</span></div>
+                <div class="m-item-desc">INT nhân x2 lượng XP nhận từ Quyết Sách.</div>
+                <button class="btn-base buy-btn" id="buy-sword">Trang bị</button>
+            </div>
+            <div class="market-item">
+                <div class="m-item-header flex-between"><span class="text-bold">Bảo Hiểm Hệ Thống</span><span>30 XP</span></div>
+                <div class="m-item-desc">Cơ chế Auto-Hedge chống phạt Lệ phí ngày mai.</div>
+                <button class="btn-base buy-btn" id="buy-shield">Trang bị</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-panel" style="margin-top: 12px; background: rgba(212,175,55,0.01);">
+        <div class="title-xs"><i class="fa-solid fa-robot"></i> Khởi Tạo Giao Thức Ủy Thác</div>
+        <div class="flex-center" style="flex-direction: column; gap: 8px;">
+            <div id="wheel-display" class="wheel-display">🤖 HỆ THỐNG ĐANG CHỜ LỆNH 🤖</div>
+            <button id="wheel-btn" class="btn-base action-btn" style="padding:6px; font-size:0.72rem;"><i class="fa-solid fa-terminal"></i> Ủy Thác Giao Thức (10 XP)</button>
+        </div>
+    </div>
+    
+    <div class="glass-panel" style="margin-top: 12px; background: rgba(212,175,55,0.01);">
+        <div class="title-xs" style="margin: 0;"><span><i class="fa-solid fa-vault"></i> Kho Lưu Trữ Web3</span><button id="mint-badge-btn" class="btn-base mint-badge-btn" disabled>Đúc Huy Chương</button></div>
+        <div id="badge-container" class="badge-container"></div>
+    </div>
+    
+    <div id="filter-area" class="filter-container flex-between">
+        <button id="filter-upcoming" class="btn-base filter-chip">⏳ Sắp tới</button>
+        <button id="filter-all" class="btn-base filter-chip active">📱 Tất cả</button>
+    </div>
+    <div id="btn-list" class="btn-list"></div>
+    
+    <button id="btn-reset" class="btn-base" style="width:100%; background:transparent; color:var(--primary); margin-top:16px; font-size:0.65rem; opacity:0.3;">Reset Ledger Cache</button>
+</div>
+
+<script>
+(() => {
+    // 1. UTILS & CONSTANTS
+    const $ = id => document.getElementById(id);
+    const $$ = sel => document.querySelectorAll(sel);
+    
+    const defaultData = {
+        finance: { val: 0, acts: [], streak: 0, lastDate: "", history: [] },
+        health: { val: 0, acts: [], streak: 0, lastDate: "", history: [] },
+        badges: [], theme: "gold", hp: 100, hasShield: false, hasSword: false, crownToken: 0,
+        activityHeatmap: {}, attributes: { str: 1, int: 2, vit: 1 }, unusedXp: 0, comboMultiplier: 1.0, comboCount: 0,
+        activeStatuses: [], boss: { level: 1, hp: 500, maxHp: 500, isDefeated: false }, soundEnabled: true
+    };
+    const ranks = ["Tập Sự", "Chuyên Gia", "Chiến Lược Gia", "Cổ Đông", "Phố Wall Elite", "Tài Phiệt", "Vương Giả Web3", "Lãnh Tụ Hệ Thống"];
+    
+    // 2. STATE VARIABLES
+    let data = {}, userWallet = null, chartInst = null, sortableInst = null, curTab = 'finance', curFilter = 'upcoming', audioCtx = null;
+
+    // 3. CORE FUNCTIONS (Data & Theme)
+    const getStoreKey = () => `lifeSyncWeb3Data_v2${userWallet ? `_${userWallet.toLowerCase()}` : ''}`;
+    
+    const loadData = () => {
+        data = { ...defaultData, ...JSON.parse(localStorage.getItem(getStoreKey()) || '{}') };
+        ['finance', 'health'].forEach(t => data[t].acts.forEach(a => a.completed ??= false));
+    };
+    
+    const saveData = (shouldRender = false) => {
+        localStorage.setItem(getStoreKey(), JSON.stringify(data));
+        if (shouldRender) render();
+    };
+
+    const applyTheme = tName => {
+        const t = {
+            gold: { p: '#d4af37', s: '#aa7c11', g: 'rgba(212, 175, 55, 0.3)', l: '#f3e5ab', b: '#050811', n: 'Hoàng Kim' },
+            bloodmoon: { p: '#ff3333', s: '#800000', g: 'rgba(255, 51, 51, 0.3)', l: '#ffb3b3', b: '#080202', n: 'Blood Moon' },
+            ruby: { p: '#e0115f', s: '#9b0f44', g: 'rgba(224, 17, 95, 0.3)', l: '#ffb3d1', b: '#0c0206', n: 'Hồng Ngọc' },
+            sapphire: { p: '#0f52ba', s: '#002fa7', g: 'rgba(15, 82, 186, 0.3)', l: '#90caf9', b: '#020614', n: 'Lam Ngọc' },
+            emerald: { p: '#50c878', s: '#2e8b57', g: 'rgba(80, 200, 120, 0.3)', l: '#a3f7bf', b: '#021008', n: 'Phỉ Thúy' },
+            amethyst: { p: '#9966cc', s: '#663399', g: 'rgba(153, 102, 204, 0.3)', l: '#e6ccff', b: '#0b0412', n: 'Thạch Anh' }
+        }[tName] || t.gold;
+        
+        const r = document.documentElement.style;
+        r.setProperty('--primary', t.p); r.setProperty('--secondary', t.s); r.setProperty('--primary-glow', t.g); r.setProperty('--gold-light', t.l); r.setProperty('--bg', t.b);
+        $('current-theme-indicator').style.background = t.p; $('current-theme-name').innerText = t.n;
+        data.theme = tName; saveData(); if (chartInst) renderChart();
+    };
+
+    // 4. AUDIO & WEB3
+    const playSound = type => {
+        if (!data.soundEnabled) return;
+        try {
+            audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const cfg = { click: {f:600, t:'sine', g:0.05, d:0.1}, success: {f:523, t:'triangle', g:0.08, d:0.2}, spin: {f:300, t:'square', g:0.02, d:0.08}, hit: {f:120, t:'sawtooth', g:0.1, d:0.15} }[type];
+            osc.type = cfg.t; osc.frequency.setValueAtTime(cfg.f, audioCtx.currentTime); gain.gain.setValueAtTime(cfg.g, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + cfg.d);
+        } catch(e) {}
+    };
+
+    const updateWalletUI = () => {
+        const btn = $('connect-wallet');
+        if (userWallet) { btn.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${userWallet.slice(0,6)}...${userWallet.slice(-4)}`; btn.classList.add('connected'); }
+        else { btn.innerHTML = `<i class="fa-solid fa-wallet"></i> Connect Wallet`; btn.classList.remove('connected'); }
+    };
+
+    const connectWallet = async () => {
+        playSound('click');
+        if (!window.ethereum) return alert("Hãy cài đặt Ví MetaMask!");
+        try {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            userWallet = await provider.getSigner().getAddress();
+            updateWalletUI(); loadData(); applyTheme(data.theme); confetti({ particleCount: 80, spread: 50, origin: {y:0.8} }); saveData(true);
+        } catch(e) { alert("Kết nối ví thất bại!"); }
+    };
+
+    // 5. GAME LOGIC & HELPERS
+    const getLvl = pts => {
+        let l = 0, c = pts, next = 1000;
+        while (c >= next) { c -= next; l++; next = Math.floor(1000 * Math.pow(1.15, l)); }
+        return { l, r: c, t: next };
+    };
+    
+    const updateHistory = () => {
+        const d = new Date().toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit'});
+        ['finance', 'health'].forEach(t => {
+            const s = data[t]; s.history ??= [];
+            const idx = s.history.findIndex(h => h.date === d);
+            idx !== -1 ? (s.history[idx].val = s.val) : s.history.push({ date: d, val: s.val });
+            if (s.history.length > 7) s.history.shift();
+        });
+    };
+
+    const handleHedge = dmg => {
+        if (data.boss.isDefeated) return;
+        data.boss.hp = Math.max(0, data.boss.hp - Math.floor(dmg * (1 + data.attributes.int * 0.25)));
+        playSound('hit');
+        if (data.boss.hp === 0) {
+            data.boss.isDefeated = true; data.crownToken += 500; data.unusedXp += 300;
+            alert(`🎉 GIAO PHÒNG VỆ THÀNH CÔNG! Hóa giải rủi ro LV.${data.boss.level}! Thưởng +500 $CROWN & +300 Thặng Dư XP.`);
+            confetti({ particleCount: 150, spread: 80 });
+            setTimeout(() => {
+                data.boss.level++; data.boss.maxHp = 500 + data.boss.level * 150; data.boss.hp = data.boss.maxHp; data.boss.isDefeated = false; saveData(true);
+            }, 5000);
+        }
+    };
+
+    const getUpcomingIdx = acts => {
+        const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+        const pending = acts.map((a, i) => {
+            if (a.completed) return null;
+            const m = [...a.name.matchAll(/(\d{1,2})[:h](\d{2})/g)];
+            return m.length ? { i, t: parseInt(m[0][1])*60 + parseInt(m[0][2]) } : { i, t: -1 };
+        }).filter(x => x);
+        
+        const inDay = pending.filter(x => x.t > nowMins).sort((a,b) => a.t - b.t);
+        if (inDay.length) return inDay[0].i;
+        const nextDay = pending.filter(x => x.t !== -1).sort((a,b) => a.t - b.t);
+        return nextDay.length ? nextDay[0].i : (pending.length ? pending[0].i : -1);
+    };
+
+    // 6. RENDER ENGINE
+    const renderChart = () => {
+        if (!chartInst) {
+            chartInst = new Chart($('trendChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ type: 'line', label: 'Tài Sản Vĩ Mô', data: [], borderWidth: 2, tension: 0.35, fill: false }, { type: 'bar', label: 'Vận Hành Lối Sống', data: [], backgroundColor: 'rgba(56, 189, 248, 0.2)', borderColor: '#38bdf8', borderWidth: 1 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { color: '#94a3b8' } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } } } }
+            });
+        }
+        chartInst.data.labels = data.finance.history.map(h => h.date);
+        chartInst.data.datasets[0].data = data.finance.history.map(h => h.val);
+        chartInst.data.datasets[0].borderColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+        chartInst.data.datasets[1].data = data.health.history.map(h => h.val);
+        chartInst.update();
+    };
+
+    const render = (skipChart = false) => {
+        const s = data[curTab], info = getLvl(data.finance.val + data.health.val);
+        const rank = ranks[Math.min(Math.floor(info.l/3), ranks.length-1)];
+        
+        // Header & Stats
+        $('fill-total').style.width = `${(info.r/info.t)*100}%`; $('pct-total').innerText = `${((info.r/info.t)*100).toFixed(1)}%`;
+        $('stats').innerText = info.l; $('rank-text').textContent = rank.toUpperCase();
+        $('streak').innerHTML = `<i class="fa-solid fa-bolt"></i> STREAK: ${s.streak} DAYS (INT: x${(1.0 + data.comboCount*0.1 + data.attributes.int*0.1).toFixed(1)})`;
+        $('hp-text').innerText = `${data.hp}/100`; $('hp-bar').style.width = `${data.hp}%`;
+        $('market-gold').innerText = `${s.val} XP`; $('crown-token-balance').innerText = `${data.crownToken} $CROWN`;
+        
+        // Boss
+        $('boss-level').innerText = `LV.${data.boss.level}`;
+        $('boss-hp-bar').style.width = `${(data.boss.hp/data.boss.maxHp)*100}%`;
+        $('boss-hp-text').innerText = `${data.boss.hp} / ${data.boss.maxHp} Risk HP`;
+        $('boss-status').innerText = data.boss.isDefeated ? "ĐÃ BẢO VỆ XONG" : `HÓA GIẢI: +${(((data.comboMultiplier-1) + data.attributes.int*0.25)*100).toFixed(0)}%`;
+        
+        // Upgrades
+        ['str','int','vit'].forEach(k => { $(`stat-${k}`).innerText = data.attributes[k]; $$(`[data-stat="${k}"]`)[0].disabled = data.unusedXp < 100; });
+        $('unused-xp').innerText = data.unusedXp;
+        $('text-shield-status').innerText = data.hasShield ? "Bảo Hiểm Active" : "Không Phòng Vệ";
+        $('text-shield-status').className = data.hasShield ? "shield-active" : "";
+        $('buy-sword').disabled = data.hasSword; $('buy-sword').innerText = data.hasSword ? "Đã tích hợp" : "Trang bị";
+
+        // Status Effects & Heatmap
+        $('status-effects').innerHTML = data.activeStatuses.length ? data.activeStatuses.map(st => `<div class="effect-badge ${st.type}"><i class="${st.type==='buff'?'fa-solid fa-arrow-trend-up':'fa-solid fa-arrow-trend-down'}"></i> ${st.name} (${st.duration}d)</div>`).join('') : `<span style="font-size:0.65rem; color:var(--text-muted);">Không có biến động</span>`;
+        
+        const grid = $('heatmap-grid'); grid.innerHTML = ''; let tCnt = 0;
+        for(let i=6; i>=0; i--) {
+            const d = new Date(); d.setDate(d.getDate()-i);
+            const cnt = data.activityHeatmap[d.toISOString().slice(0,10)] || 0; tCnt += cnt;
+            grid.innerHTML += `<div class="heatmap-day" data-level="${cnt>5?4:cnt>3?3:cnt>1?2:cnt>0?1:0}" data-tooltip="${d.toLocaleDateString('vi-VN', {day:'numeric',month:'numeric'})}: ${cnt} lần"></div>`;
+        }
+        $('heatmap-total').innerText = `${tCnt} quyết sách`;
+
+        // Tasks Rendering
+        const list = $('btn-list'); list.innerHTML = '';
+        $('filter-area').style.display = curTab === 'finance' ? 'none' : 'flex';
+        if (sortableInst) sortableInst.option('disabled', curTab !== 'finance');
+        
+        let acts = s.acts.map((a,i) => ({...a, rawIdx: i}));
+        const upIdx = curTab === 'health' ? getUpcomingIdx(s.acts) : -1;
+        if (curTab === 'health' && curFilter === 'upcoming') acts = upIdx !== -1 ? [acts[upIdx]] : [];
+        
+        list.innerHTML = acts.map(a => `
+            <div class="flex-between act-item animate__animated animate__fadeInUp ${a.completed?'completed':''} ${(curTab==='health' && a.rawIdx===upIdx)?'is-upcoming':''}">
+                ${curTab==='finance'?'<div class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>':''}
+                <div class="act-content"><span class="text-bold act-name act-name-trigger" data-idx="${a.rawIdx}">${a.name}</span></div>
+                <div class="act-actions">
+                    <button class="btn-base act-btn act-complete-trigger" data-idx="${a.rawIdx}" ${a.completed?'disabled':''}>${a.completed?'Xong':'Thực Thi'}</button>
+                    <button class="btn-base del-btn act-delete-trigger" data-idx="${a.rawIdx}"><i class="fa-regular fa-trash-can"></i></button>
+                </div>
+            </div>`).join('');
+
+        // Badges
+        $('badge-container').innerHTML = data.badges.map(b => `<div class="badge-item"><i class="fa-solid fa-crown"></i> <span>${b}</span></div>`).join('');
+        $('mint-badge-btn').disabled = !(userWallet && rank !== "TẬP SỰ" && !data.badges.includes(rank));
+
+        if (!skipChart) renderChart();
+    };
+
+    // 7. TASK ACTIONS (Called via Delegation)
+    const execAction = {
+        complete: i => {
+            const act = data[curTab].acts[i]; if (act.completed) return;
+            const nowStr = new Date().toDateString();
+            if (data[curTab].lastDate !== nowStr) { data[curTab].streak++; data[curTab].lastDate = nowStr; }
+            
+            data.comboCount++; data.comboMultiplier = Math.min(4.0, 1.0 + data.comboCount*0.1 + data.attributes.int*0.15);
+            let mod = (data.hasSword ? 2.0 : 1.0) * data.activeStatuses.reduce((a,c) => a * (c.effect==='multiplier_1.5'?1.5 : c.effect==='multiplier_0.7'?0.7 : 1), 1.0);
+            
+            const rw = Math.floor(act.val * data.comboMultiplier * mod);
+            data[curTab].val += rw; data.crownToken += rw; data.unusedXp += rw; data.hp = Math.min(100, data.hp + 5);
+            act.completed = true; data.activityHeatmap[new Date().toISOString().slice(0,10)] = (data.activityHeatmap[new Date().toISOString().slice(0,10)] || 0) + 1;
+            
+            handleHedge(rw); updateHistory(); playSound('success'); confetti({particleCount:30, spread:40}); saveData(true);
+        },
+        delete: i => { if(confirm('Xóa bỏ Quyết Sách này?')) { data[curTab].acts.splice(i,1); updateHistory(); saveData(true); } },
+        edit: i => { const n = prompt("Sửa đổi Sắc Lệnh / Quyết Sách:", data[curTab].acts[i].name); if (n?.trim()) { data[curTab].acts[i].name = n.trim(); saveData(true); } }
+    };
+
+    // 8. CRON & INIT
+    setInterval(() => {
+        const d = new Date(), diff = new Date(d).setHours(24,0,0,0) - d;
+        const [h, m, s] = [Math.floor((diff/3600000)%24), Math.floor((diff/60000)%60), Math.floor((diff/1000)%60)].map(v => String(v).padStart(2,'0'));
+        $('tax-timer').innerText = `${h}:${m}:${s}`;
+        if (h==='00' && m==='00' && s==='00') {
+            if (!data.hasShield && data.boss.hp > 0) {
+                const dmg = Math.max(1, Math.max(5, Math.floor((data.boss.hp/data.boss.maxHp)*30)) - data.attributes.str*3);
+                data.hp = Math.max(0, data.hp - dmg);
+                data.activeStatuses.push({ id: "fatigue", name: "Trì Trệ Hệ Thống", type: "debuff", duration: 1, effect: "multiplier_0.7" });
+                alert(`⚠️ Lạm phát bùng nổ! Hệ thống mất ${dmg} Thanh Khoản & dính debuff "Trì Trệ".`);
+            }
+            data.hasShield = false; data.comboCount = 0; data.comboMultiplier = 1.0;
+            data.activeStatuses = data.activeStatuses.map(st => ({...st, duration: st.duration-1})).filter(st => st.duration > 0);
+            ['finance', 'health'].forEach(t => data[t].acts.forEach(a => a.completed = false)); saveData(true);
+        }
+    }, 1000);
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', accs => { userWallet = accs[0] || null; updateWalletUI(); loadData(); applyTheme(data.theme); saveData(true); });
+            const p = new ethers.providers.Web3Provider(window.ethereum); p.listAccounts().then(a => { if(a[0]){ userWallet = a[0]; updateWalletUI(); loadData(); applyTheme(data.theme); render(); } });
+        }
+        loadData(); applyTheme(data.theme);
+
+        // EVENT DELEGATION FOR TASK LIST (INDUSTRIALIZED)
+        $('btn-list').addEventListener('click', e => {
+            const btn = e.target.closest('button'), nameEl = e.target.closest('.act-name-trigger');
+            if (nameEl) return execAction.edit(nameEl.dataset.idx);
+            if (!btn) return;
+            if (btn.classList.contains('act-complete-trigger')) execAction.complete(btn.dataset.idx);
+            else if (btn.classList.contains('act-delete-trigger')) execAction.delete(btn.dataset.idx);
+        });
+
+        // BINDINGS
+        $('connect-wallet').onclick = connectWallet;
+        $('sound-toggle').onclick = () => { data.soundEnabled = !data.soundEnabled; $('sound-toggle').classList.toggle('muted', !data.soundEnabled); saveData(); playSound('click'); };
+        
+        $('theme-dropdown-btn').onclick = e => { e.stopPropagation(); $('theme-dropdown-menu').classList.toggle('show'); };
+        $$('.theme-option').forEach(opt => opt.onclick = () => { applyTheme(opt.dataset.theme); $('theme-dropdown-menu').classList.remove('show'); });
+        window.onclick = () => $('theme-dropdown-menu').classList.remove('show');
+
+        $$('.tab-btn').forEach(b => b.onclick = () => { curTab = b.id.replace('tab-',''); $$('.tab-btn').forEach(x => x.classList.toggle('active', x===b)); render(); });
+        $$('.filter-chip').forEach(b => b.onclick = () => { curFilter = b.id.replace('filter-',''); $$('.filter-chip').forEach(x => x.classList.toggle('active', x===b)); render(true); });
+
+        $('btn-issue').onclick = () => { const n=$('name').value, v=parseInt($('val').value); if(n && !isNaN(v)){ data[curTab].acts.push({name:n, val:v, completed:false}); $('name').value=''; $('val').value=''; saveData(true); } };
+        
+        $('btn-toggle-bulk').onclick = () => { const s = $('bulk-section'); s.style.display = s.style.display === 'block' ? 'none' : 'block'; };
+        const handleBulk = over => { const t=$('bulk-input').value.trim(); if(!t) return; const p=t.split('\n').filter(l=>l.trim()).map(l=>{const p=l.split('|'); return{name:p[0].trim(),val:parseInt(p[1])||10,completed:false}}); data[curTab].acts = over ? p : data[curTab].acts.concat(p); $('bulk-input').value=''; $('bulk-section').style.display='none'; saveData(true); };
+        $('btn-import-append').onclick = () => handleBulk(false); $('btn-import-overwrite').onclick = () => handleBulk(true);
+
+        $('wheel-btn').onclick = () => {
+            if(data[curTab].val < 10) return alert("Cần tối thiểu 10 XP!"); data[curTab].val -= 10;
+            const d=$('wheel-display'), b=$('wheel-btn'); d.classList.add('spinning'); b.disabled=true; let c=0;
+            const outs = [{n:"Arbitrage",x:40}, {n:"Tái cơ cấu",x:10}, {n:"Mở thanh khoản",x:120}, {n:"Slippage",x:0}];
+            const spin = setInterval(() => {
+                playSound('spin'); d.textContent = `DELEGATING: ${outs[Math.floor(Math.random()*4)].n}`;
+                if(++c > 12) { clearInterval(spin); const r = outs[Math.floor(Math.random()*4)]; d.textContent = `🤖 HOÀN TẤT: ${r.n} (+${r.x} XP)`; d.classList.remove('spinning'); b.disabled=false; data[curTab].val+=r.x; updateHistory(); saveData(true); }
+            }, 100);
+        };
+
+        const buy = (k, p) => { if(data[curTab].val<p)return alert("Không đủ điểm!"); data[curTab].val-=p; data[k]=true; alert(k==='hasSword'?"⚔️ Đã trang bị Hợp Đồng Đòn Bẩy!":"🛡️ Đã mua Bảo Hiểm Hệ Thống!"); updateHistory(); saveData(true); };
+        $('buy-sword').onclick = () => buy('hasSword', 50); $('buy-shield').onclick = () => buy('hasShield', 30);
+        $$('.stat-plus-btn').forEach(btn => btn.onclick = e => { const st=e.target.dataset.stat; if(data.unusedXp<100) return alert("Cần 100 XP thặng dư!"); playSound('success'); data.unusedXp-=100; data.attributes[st]++; if(st==='vit') data.hp=Math.min(100, data.hp+10); saveData(true); });
+        
+        $('mint-badge-btn').onclick = () => { data.badges.push(ranks[Math.min(Math.floor(getLvl(data.finance.val+data.health.val).l/3), ranks.length-1)]); saveData(true); confetti({particleCount:100, spread:70}); };
+        $('btn-reset').onclick = () => { if(confirm('Reset toàn bộ cache?')) { localStorage.removeItem(getStoreKey()); location.reload(); } };
+
+        sortableInst = new Sortable($('btn-list'), { handle: '.drag-handle', animation: 200, onEnd: e => { if(curTab==='finance'){ data.finance.acts.splice(e.newIndex, 0, data.finance.acts.splice(e.oldIndex, 1)[0]); saveData(true); } } });
+        render();
+    });
+})();
+</script>
+</body>
+</html>
