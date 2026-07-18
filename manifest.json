@@ -1,56 +1,15 @@
 {
-  "name": "LifeSync Web3 - Royal Capital Hub",
+  "name": "LifeSync Web3",
   "short_name": "LifeSync",
-  "description": "Giao thức quản trị hiệu suất vĩ mô và định hình lối sống Web3 Elite.",
-  "categories": [
-    "productivity",
-    "finance"
-  ],
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#050811",
   "theme_color": "#d4af37",
-  "dir": "ltr",
-  "lang": "vi",
-  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/5556/5556499.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/5556/5556499.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/5556/5556499.png", 
       "sizes": "512x512",
       "type": "image/png"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Quyết sách Vĩ mô",
-      "short_name": "Vĩ mô",
-      "description": "Quản trị danh mục tài sản và đòn bẩy hệ thống",
-      "url": "./index.html?tab=finance",
-      "icons": [
-        {
-          "src": "https://cdn-icons-png.flaticon.com/512/5556/5556499.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Vận hành Lối sống",
-      "short_name": "Lối sống",
-      "description": "Tối ưu hóa tần suất thực thi mục tiêu cốt lõi",
-      "url": "./index.html?tab=health",
-      "icons": [
-        {
-          "src": "https://cdn-icons-png.flaticon.com/512/5556/5556499.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
     }
   ]
 }
